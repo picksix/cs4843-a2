@@ -1,0 +1,58 @@
+Description: >
+  set up database
+
+Parameters:
+  EnvironmentName:
+    Description: An environment name that will be prefixed to resource names
+    Type: String
+  Vol1:
+    Description: The first volume id
+    Type: AWS::EC2::Volume::Id
+  Vol2:
+    Description: The second volume id
+    Type: AWS::EC2::Volume::Id
+
+Resources:
+  DB1:
+    Type: AWS::EC2::Instance
+    Properties:
+      InstanceType: t2.micro
+      AvailabilityZone: !Select [ 0, !GetAZs '' ]
+      ImageId: ami-0c02fb55956c7d316
+      SubnetId:
+        Fn::ImportValue:
+          Fn::Sub: "${EnvironmentName}-PRI1-SN"
+      Volumes:
+        - Device: /dev/sda1
+          VolumeId: !Ref Vol1
+      Tags:
+        - Key: Name
+          Value: DB1
+      UserData:
+        Fn::Base64: !Sub |
+          #!/bin/bash
+          yum update -y
+          yum install -y mariadb-server
+          systemctl start mariadb
+
+  DB2:
+    Type: AWS::EC2::Instance
+    Properties:
+      InstanceType: t2.micro
+      AvailabilityZone: !Select [ 1, !GetAZs '' ]
+      ImageId: ami-0c02fb55956c7d316
+      SubnetId:
+        Fn::ImportValue:
+          Fn::Sub: "${EnvironmentName}-PRI2-SN"
+      Volumes:
+        - Device: /dev/sda1
+          VolumeId: !Ref Vol2
+      Tags:
+        - Key: Name
+          Value: DB2
+      UserData:
+        Fn::Base64: !Sub |
+          #!/bin/bash
+          yum update -y
+          yum install -y mariadb-server
+          systemctl start mariadb
